@@ -44,6 +44,7 @@
       color: red;
       font-size: 12px;
       margin-top: 10px;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -65,11 +66,13 @@ const debug = document.getElementById("debug");
 
 function log(msg) {
   console.log(msg);
-  debug.innerText += msg + "\\n";
+  debug.innerText += msg + "\n";
 }
 
-fetch("writeups.json")
+// 🔥 FIX DEFINITIVO: ruta absoluta + cache buster
+fetch("/writeups.json?v=" + Date.now())
   .then(res => {
+    log("HTTP status: " + res.status);
     if (!res.ok) throw new Error("writeups.json NOT FOUND");
     return res.json();
   })
@@ -79,6 +82,8 @@ fetch("writeups.json")
     const list = document.getElementById("list");
     const content = document.getElementById("content");
 
+    list.innerHTML = "";
+
     data.forEach(w => {
       const item = document.createElement("div");
       item.className = "item";
@@ -87,8 +92,9 @@ fetch("writeups.json")
       item.onclick = () => {
         log("Loading: " + w.path);
 
-        fetch(w.path)
+        fetch(w.path + "?v=" + Date.now())
           .then(r => {
+            log("MD status: " + r.status);
             if (!r.ok) throw new Error("MD fetch failed");
             return r.text();
           })
