@@ -46,13 +46,30 @@
 fetch("writeups.json")
   .then(res => res.json())
   .then(data => {
-    const sidebar = document.querySelector("aside");
-    const main = document.querySelector("main");
+    console.log("DATA:", data);
+
+    // Forzar selección segura
+    let sidebar = document.querySelector("aside");
+
+    // Si no existe, lo creamos (clave)
+    if (!sidebar) {
+      sidebar = document.createElement("aside");
+      sidebar.style.width = "250px";
+      sidebar.style.background = "#111";
+      sidebar.style.color = "white";
+      sidebar.style.padding = "10px";
+      sidebar.style.height = "100vh";
+      sidebar.style.overflowY = "auto";
+      document.body.prepend(sidebar);
+    }
+
+    const main = document.querySelector("main") || document.body;
 
     data.forEach(w => {
       const item = document.createElement("div");
-      item.className = "item";
-      item.textContent = `${w.name} (${w.os} - ${w.difficulty})`;
+      item.textContent = w.name;
+      item.style.padding = "8px";
+      item.style.cursor = "pointer";
 
       item.onclick = () => {
         fetch(w.path)
@@ -64,7 +81,8 @@ fetch("writeups.json")
 
       sidebar.appendChild(item);
     });
-  });
+  })
+  .catch(err => console.error("ERROR:", err));
 </script>
 
 </body>
