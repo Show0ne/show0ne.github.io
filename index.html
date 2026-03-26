@@ -3,86 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <title>HTB Writeups</title>
+
+  <!-- Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
     body {
       display: flex;
       margin: 0;
       font-family: sans-serif;
     }
+
     aside {
-      width: 250px;
+      width: 260px;
       background: #111;
       color: white;
       padding: 10px;
       height: 100vh;
       overflow-y: auto;
     }
+
     main {
       flex: 1;
       padding: 20px;
       background: #f5f5f5;
       overflow-y: auto;
     }
+
     .item {
       padding: 8px;
       cursor: pointer;
+      border-bottom: 1px solid #222;
     }
+
     .item:hover {
       background: #333;
     }
+
+    .debug {
+      color: red;
+      font-size: 12px;
+      margin-top: 10px;
+    }
   </style>
 </head>
+
 <body>
 
 <aside>
   <h3>Writeups</h3>
+  <div id="list"></div>
+  <div id="debug" class="debug"></div>
 </aside>
 
-<main>
+<main id="content">
   <h2>Select a machine</h2>
 </main>
 
 <script>
+const debug = document.getElementById("debug");
+
+function log(msg) {
+  console.log(msg);
+  debug.innerText += msg + "\\n";
+}
+
 fetch("writeups.json")
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("writeups.json NOT FOUND");
+    return res.json();
+  })
   .then(data => {
-    console.log("DATA:", data);
+    log("JSON loaded OK");
 
-    // Forzar selección segura
-    let sidebar = document.querySelector("aside");
-
-    // Si no existe, lo creamos (clave)
-    if (!sidebar) {
-      sidebar = document.createElement("aside");
-      sidebar.style.width = "250px";
-      sidebar.style.background = "#111";
-      sidebar.style.color = "white";
-      sidebar.style.padding = "10px";
-      sidebar.style.height = "100vh";
-      sidebar.style.overflowY = "auto";
-      document.body.prepend(sidebar);
-    }
-
-    const main = document.querySelector("main") || document.body;
+    const list = document.getElementById("list");
+    const content = document.getElementById("content");
 
     data.forEach(w => {
       const item = document.createElement("div");
-      item.textContent = w.name;
-      item.style.padding = "8px";
-      item.style.cursor = "pointer";
+      item.className = "item";
+      item.textContent = `${w.name} (${w.os} - ${w.difficulty})`;
 
       item.onclick = () => {
+        log("Loading: " + w.path);
+
         fetch(w.path)
-          .then(r => r.text())
+          .then(r => {
+            if (!r.ok) throw new Error("MD fetch failed");
+            return r.text();
+          })
           .then(md => {
-            main.innerText = md;
+            content.innerHTML = marked.parse(md);
+          })
+          .catch(err => {
+            log("ERROR loading MD");
+            console.error(err);
           });
       };
 
-      sidebar.appendChild(item);
+      list.appendChild(item);
     });
   })
-  .catch(err => console.error("ERROR:", err));
+  .catch(err => {
+    log("ERROR loading JSON");
+    console.error(err);
+  });
 </script>
 
 </body>
